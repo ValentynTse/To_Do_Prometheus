@@ -5,6 +5,7 @@
     <link rel="icon" type="image/x-icon" href="src/images/favicon.ico">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/src/styles/styles.css">
     <title>To Do - Prometheus</title>
 </head>
 <body>
@@ -12,6 +13,7 @@
         <nav>
             <a id="home_link">
                 <img src="src/images/favicon.ico" height="50" alt="To Do">
+                To Do
             </a>
         </nav>
         <section id="searchSection">
@@ -24,10 +26,10 @@
         <section>
             <h1>Мої задачі</h1>
         </section>
-        <section id="taskList">
+        <section class="taskListClass" id="taskList">
             <div class="task" id="addTask">
                 <div class="taskName">
-                    <div class="radio leftElement"></div>
+                    <div class="radio leftElement">+</div>
                     <input type="text" id="addTaskInput" placeholder="Додати задачу"> 
                 </div>
                 <div id="options">
@@ -38,7 +40,7 @@
         <section>
             <h2>Виконані задачі</h2>
         </section>
-        <section id="doneTaskList"></section>
+        <section class="taskListClass" id="doneTaskList"></section>
     </main>
 </body>
 </html>
