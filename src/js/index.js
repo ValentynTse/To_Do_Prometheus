@@ -1,13 +1,16 @@
 window.onload = () => {
     initialUISetup();
+    initialStorageSetup();
 }
 
 const initialUISetup = () => {
-    document.getElementById('search').addEventListener('mouseover', () => addClassWithTimeout('searchLabel', 'hovered', 500));
-    document.getElementById('search').addEventListener('mouseout', () => removeClassWithTimeout('searchLabel', 'hovered', 500));
+    document.getElementById('search').addEventListener('mouseover', () => addClassWithTimeout('searchLabel', 'hovered', 300));
+    document.getElementById('search').addEventListener('mouseout', () => removeClassWithTimeout('searchLabel', 'hovered', 300));
     document.getElementById('search').addEventListener('keyup', (event) => searchInputHandler(event));
     document.getElementById('addTaskInput').addEventListener('keyup', (event) => validateField(event));
     document.getElementById('addButton').addEventListener('click', addNewTask);
+    restoreTasks('taskList', stringConstants.localStorageKey);
+    restoreTasks('doneTaskList', stringConstants.localStorageDoneKey);
     radioHandlerSetup();
 }
 
@@ -58,15 +61,34 @@ const addNewTask = () => {
     const id = generateId(10);
     taskWrapper.innerHTML = getTaskTemplate(inputElement.value, id).trim();
     document.getElementById('taskList').append(taskWrapper.firstChild);
+    addTaskToStorage({ id: id, value: inputElement.value }, stringConstants.localStorageKey);
     inputElement.value = '';
     disableAddTaskButton();
     document.getElementById(id).addEventListener('click', (event) => onRadioClick(event));
 }
 
+const restoreTasks = (element, key) => {
+    const taskList = getTaskFromStorage(key);
+    const taskListTemplates = taskList.map((task) => getTaskTemplate(task.value, task.id).trim());
+    const documentFragment = document.createDocumentFragment();
+    const taskWrapper = document.createElement('div');
+    for (const task of taskListTemplates) {
+        taskWrapper.innerHTML = task;
+        documentFragment.append(taskWrapper.firstChild);
+    }
+    document.getElementById(element).append(documentFragment);
+}
+
 const changeTaskStatus = (id) => {
     const taskElement = document.getElementById(id);
+    const storageKey = getTaskStorageLocation(id);
     taskElement.remove();
-    document.getElementById('doneTaskList').append(taskElement);
+    if (storageKey === stringConstants.localStorageKey) {
+        document.getElementById('doneTaskList').append(taskElement);
+    } else {
+        document.getElementById('taskList').append(taskElement);
+    }
+    removeTaskFromStorage(id, storageKey);
 
 }
 
@@ -126,4 +148,63 @@ const clearFiltration = () => {
     for (const taskElement of taskElementsList) {
         taskElement.classList.remove('hidden');
     }
+}
+
+// LOCAL STORAGE
+
+const stringConstants = {
+    localStorageKey: 'taskList',
+    localStorageDoneKey: 'doneTasks',
+}
+
+const storageTemplate = JSON.stringify({taskList: []});
+
+const initialStorageSetup = () => {
+    const initialStorage = getStorage(stringConstants.localStorageKey);
+    if (!initialStorage) {
+        localStorage.setItem(stringConstants.localStorageKey, storageTemplate);
+        localStorage.setItem(stringConstants.localStorageDoneKey, storageTemplate);
+    }
+}
+
+const getTaskStorageLocation = (id) => {
+    const activeStorage = getStorage(stringConstants.localStorageKey);
+
+    if (JSON.parse(activeStorage).taskList.find((task) => task.id.localeCompare(id) === 0)) {
+        return stringConstants.localStorageKey;
+    } else {
+        return stringConstants.localStorageDoneKey;
+    }
+}
+
+const getTaskFromStorage = (key) => {
+    const taskListString = getStorage(key);
+    if (!taskListString) {
+        initialStorageSetup();
+    }
+    return JSON.parse(getStorage(key)).taskList;
+}
+
+const addTaskToStorage = (task, key) => {
+    const taskListString = getStorage(key);
+    const taskList = JSON.parse(taskListString);
+    taskList.taskList.push(task);
+    localStorage.setItem(key, JSON.stringify(taskList));
+}
+
+const removeTaskFromStorage = (id, key) => {
+    const taskListString = getStorage(key);
+    const taskList = JSON.parse(taskListString);
+    const newList = taskList.taskList.filter((task) => {
+        if (task.id.localeCompare(id) === 0) {
+            addTaskToStorage(task, key.localeCompare(stringConstants.localStorageKey) === 0 ? stringConstants.localStorageDoneKey : stringConstants.localStorageKey);
+        } else {
+            return task;
+        }
+    });
+    localStorage.setItem(key, JSON.stringify({ taskList: newList }));
+}
+
+const getStorage = (key) => {
+    return localStorage.getItem(key);
 }
